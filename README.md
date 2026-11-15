@@ -61,6 +61,13 @@ There are touch control settings directly in the Controls manager, and a Gamepad
 You can add more custom buttons with some sort of interaction, such Tech, Codex, Chat, Interact, etc. Many of the essential functionalities are already created as buttons in the long list of options, though not all enabled by default.
 By clicking on the name of a button, it will open up details about it. In general, there will be the Displayed text, which you can change to change the name of the button and what is displayed on it in-game, the size which is self explanatory, the position, which can be adjusted visually with the Preview / Adjust Layout button at the top, the Interaction that occurs when the button is interacted with, and button behavior, which is **Single press, Rapid fire/repeat, Hold, and Toggle.** Single press runs the interaction once when the button is tapped. Rapid fire repeatedly runs the interaction while the button is held, hold will send the signal that the interaction should be held (typically the one you want), and toggle which is hold but instead of canceling when released it is canceled when it is tapped for the second time.
 
+#### Chat mode
+When the game opens a text box (the chat, or any search field), the normal touch controls are hidden and touches elsewhere are ignored, so a stray tap can no longer attack or close the chat. A small bar appears at the top right, clear of the on-screen keyboard:
+- **Send** presses Enter, **Close** presses Esc.
+- **Up / Dn** step through your previously sent messages and commands.
+
+The **/** button (next to the chat button) opens the chat with a slash already typed, for commands. All of these are normal buttons in the Controls manager: move, resize or rename them, or untick every chat-bar button there to turn chat mode off.
+
 #### Macros
 Macros let one touch button press multiple keyboard keys at the same time. They are useful for shortcuts that normally require a modifier key, such as emotes, menu shortcuts, or any custom keybinds you have set up in Starbound.
 
@@ -156,7 +163,7 @@ cmake --build --preset android-arm64-debug --target android_apk --parallel
 
 The Switch build does not use vcpkg. The required third-party libraries are
 provided by devkitPro or must be cross-compiled as Switch static portlibs:
-SDL3, Dear ImGui, re2, cpr, zstd, abseil, native zlib-ng, freetype, libpng, libjpeg-turbo,
+SDL3, Dear ImGui, re2, cpr, zstd, abseil, freetype, libpng, libjpeg-turbo,
 libogg, libvorbis, libdrm_nouveau, and their dependencies.
 
 Set the devkitPro environment before configuring:
@@ -175,18 +182,12 @@ devkitA64 `libgcc.a` multilib variants:
 ./scripts/switch/apply-toolchain-patches.sh
 ```
 
-Build the isolated Abseil and native zlib-ng dependencies, then configure and
-build the release NRO from `source/`. The SDK's ordinary zlib remains available
-for portlibs such as libpng; the engine uses zlib-ng's separate `zng_*` API.
+Configure and build the release NRO from `source/` (the CMake preset file is
+stored there):
 
 ```bash
-bash scripts/switch/build-abseil.sh "$PWD/build/switch-abseil"
-bash scripts/switch/build-zlib-ng.sh "$PWD/build/switch-zlib-ng"
 cd source
-cmake --preset switch-release \
-  -Dabsl_DIR="$PWD/../build/switch-abseil/install/lib/cmake/absl" \
-  -Dzlib-ng_DIR="$PWD/../build/switch-zlib-ng/install/lib/cmake/zlib-ng" \
-  -DCMAKE_PREFIX_PATH="$PWD/../build/switch-abseil/install;$PWD/../build/switch-zlib-ng/install"
+cmake --preset switch-release
 cmake --build --preset switch-release --target starbound_nro --parallel
 ```
 

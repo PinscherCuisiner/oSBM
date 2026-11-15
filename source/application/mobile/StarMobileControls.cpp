@@ -79,12 +79,6 @@ String actionName(MobileTouchAction const& action) {
       return launcherTextStatic("touchAction.gyroToggle", "Gyro Toggle");
     case MobileTouchActionKind::GamepadAimModeToggle:
       return launcherTextStatic("gamepadAction.aimModeToggle", "Toggle Aim Mode");
-    case MobileTouchActionKind::BodyTech:
-      return launcherTextStatic("touchAction.bodyTech", "Dash / body tech");
-    case MobileTouchActionKind::TouchAimModeCycle:
-      return launcherTextStatic("touchAction.aimMode", "Cycle touch aim mode");
-    case MobileTouchActionKind::OverlayVisibilityCycle:
-      return launcherTextStatic("touchAction.visibility", "Cycle controls visibility");
     case MobileTouchActionKind::ActionWheel:
       return launcherTextStatic("gamepadAction.actionWheel", "Action Wheel");
     case MobileTouchActionKind::InventoryWheel:
@@ -210,59 +204,7 @@ PerformanceCounterMode perfCounterModeFromName(String const& name, PerformanceCo
   return def;
 }
 
-std::vector<MobileTouchElement> defaultTouchElements(bool revamped) {
-  if (revamped) {
-    std::vector<MobileTouchElement> elements;
-    auto button = [&](String id, String label, Vec2F position, MobileTouchAction action,
-        String sprite, MobileTouchPressMode mode = MobileTouchPressMode::Hold, bool right = false) {
-      MobileTouchElement element;
-      element.id = std::move(id);
-      element.label = std::move(label);
-      element.position = position;
-      element.size = 0.85f;
-      element.action = std::move(action);
-      element.pressMode = mode;
-      element.sprite = std::move(sprite);
-      element.hideWhenWindowsOpen = right;
-      elements.push_back(std::move(element));
-    };
-    auto single = MobileTouchPressMode::SinglePress;
-    button("hotbarPrevious", "Previous slot", {0.09f, 0.49f}, wheelAction(true), "cyclehotbar_left", single);
-    button("hotbarNext", "Next slot", {0.16f, 0.47f}, wheelAction(false), "cyclehotbar_right", single);
-    button("leftHand", "Left hand", {0.24f, 0.53f}, mouseAction(MouseButton::Left), "leftmouse");
-    button("rightHand", "Right hand", {0.28f, 0.65f}, mouseAction(MouseButton::Right), "rightmouse");
-    button("shift", "Walk / precise mining", {0.28f, 0.77f}, keyAction(Key::LShift), "shifttoggle", MobileTouchPressMode::Toggle);
-    button("freelook", "Look around", {0.28f, 0.89f}, keyAction(Key::LCtrl), "freelook");
-    MobileTouchAction aimMode; aimMode.kind = MobileTouchActionKind::TouchAimModeCycle;
-    button("aimMode", "Aim mode", {0.34f, 0.90f}, aimMode, "cyclestick_left", single);
-    button("hotbarGroup", "Swap hotbars", {0.40f, 0.90f}, keyAction(Key::X), "cyclehotbar_1", single);
-    MobileTouchAction visibility; visibility.kind = MobileTouchActionKind::OverlayVisibilityCycle;
-    button("hideUI", "Show / hide controls", {0.035f, 0.73f}, visibility, "hideUI", single);
-    button("pause", "Pause", {0.035f, 0.84f}, keyAction(Key::Escape), "pause", single);
-    button("chat", "Chat", {0.035f, 0.94f}, keyAction(Key::Return), "chat", single);
-    button("aimHotbarPrevious", "Previous slot", {0.82f, 0.49f}, wheelAction(true), "cyclehotbar_left", single, true);
-    button("aimHotbarNext", "Next slot", {0.88f, 0.47f}, wheelAction(false), "cyclehotbar_right", single, true);
-    button("aimLeftHand", "Left hand", {0.76f, 0.55f}, mouseAction(MouseButton::Left), "leftmouse", MobileTouchPressMode::Hold, true);
-    button("aimRightHand", "Right hand", {0.74f, 0.67f}, mouseAction(MouseButton::Right), "rightmouse", MobileTouchPressMode::Hold, true);
-    button("jump", "Jump", {0.75f, 0.79f}, keyAction(Key::Space), "jump", MobileTouchPressMode::Hold, true);
-    MobileTouchAction dash; dash.kind = MobileTouchActionKind::BodyTech;
-    button("tech", "Dash / body tech", {0.76f, 0.91f}, dash, "bodytech", single, true);
-    button("headTech", "Head tech", {0.95f, 0.54f}, keyAction(Key::F), "headtech", MobileTouchPressMode::Hold, true);
-    button("interact", "E", {0.96f, 0.68f}, keyAction(Key::E), "buttonempty", single, true);
-    // Buttons take priority over the sticks' generous acquisition areas.
-    for (bool aim : {false, true}) {
-      MobileTouchElement stick;
-      stick.id = aim ? "aimJoystick" : "joystick";
-      stick.label = aim ? "Aim" : "Move";
-      stick.kind = aim ? MobileTouchElementKind::AimJoystick : MobileTouchElementKind::Joystick;
-      stick.position = {aim ? 0.87f : 0.17f, 0.76f};
-      stick.size = 1.7f;
-      stick.sprite = aim ? "joystick_mouse" : "joystick_move";
-      stick.hideWhenWindowsOpen = aim;
-      elements.push_back(std::move(stick));
-    }
-    return elements;
-  }
+std::vector<MobileTouchElement> defaultTouchElements() {
   return {
     {"joystick", launcherTextStatic("touchElement.joystick", "Joystick"), MobileTouchElementKind::Joystick, true, {0.14f, 0.78f}, 1.15f, keyAction(Key::Space), {}, {}, {}, {}},
     {"aimJoystick", launcherTextStatic("touchElement.aimJoystick", "Aim"), MobileTouchElementKind::AimJoystick, true, {0.66f, 0.78f}, 1.15f, noneAction(), {}, {}, {}, {}},
@@ -272,29 +214,25 @@ std::vector<MobileTouchElement> defaultTouchElements(bool revamped) {
     {"interact", launcherTextStatic("touchElement.interact", "E"), MobileTouchElementKind::Button, true, {0.76f, 0.73f}, 0.92f, keyAction(Key::E), {}, {}, {}, {}},
     {"pause", launcherTextStatic("touchElement.pause", "ESC"), MobileTouchElementKind::Button, true, {0.10f, 0.15f}, 0.96f, keyAction(Key::Escape), {}, {}, {}, {}},
     {"chat", launcherTextStatic("touchElement.chat", "T"), MobileTouchElementKind::Button, true, {0.83f, 0.90f}, 0.72f, keyAction(Key::Return), {}, {}, {}, {}},
+    {"slash", launcherTextStatic("touchElement.slash", "/"), MobileTouchElementKind::Button, true, {0.77f, 0.90f}, 0.72f, keyAction(Key::Slash), {}, {}, {}, {}},
     {"tech", launcherTextStatic("touchElement.tech", "F"), MobileTouchElementKind::Button, true, {0.92f, 0.58f}, 0.86f, keyAction(Key::F), {}, {}, {}, {}},
     {"shift", launcherTextStatic("touchElement.shift", "Shift"), MobileTouchElementKind::Button, false, {0.66f, 0.88f}, 0.82f, keyAction(Key::LShift), {}, {}, {}, {}},
     {"ctrl", launcherTextStatic("touchElement.ctrl", "Ctrl"), MobileTouchElementKind::Button, false, {0.58f, 0.88f}, 0.82f, keyAction(Key::LCtrl), {}, {}, {}, {}},
     {"gyroToggle", launcherTextStatic("touchElement.gyro", "Gyro"), MobileTouchElementKind::Button, false, {0.74f, 0.88f}, 0.82f, gyroToggleAction(), {}, {}, {}, {}, MobileTouchPressMode::SinglePress},
     {"dpad", launcherTextStatic("touchElement.dpad", "D-PAD"), MobileTouchElementKind::DPad, false, {0.16f, 0.74f}, 1.05f, keyAction(Key::Space),
       keyAction(Key::W), keyAction(Key::S), keyAction(Key::A), keyAction(Key::D)},
+    // Chat-mode bar (only shown while a text box has focus, see MobileTouchElement::chatOnly).
+    // Kept at the top-right so the soft keyboard never covers it.
+    {"chatClose", launcherTextStatic("touchElement.chatClose", "Close"), MobileTouchElementKind::Button, true, {0.74f, 0.13f}, 1.10f, keyAction(Key::Escape), {}, {}, {}, {},
+      MobileTouchPressMode::SinglePress, 1.0f, false, PerformanceCounterMode::Fps, true},
+    {"chatSend", launcherTextStatic("touchElement.chatSend", "Send"), MobileTouchElementKind::Button, true, {0.90f, 0.13f}, 1.10f, keyAction(Key::Return), {}, {}, {}, {},
+      MobileTouchPressMode::SinglePress, 1.0f, false, PerformanceCounterMode::Fps, true},
+    {"chatHistoryUp", launcherTextStatic("touchElement.chatHistoryUp", "Up"), MobileTouchElementKind::Button, true, {0.74f, 0.33f}, 0.90f, keyAction(Key::Up), {}, {}, {}, {},
+      MobileTouchPressMode::SinglePress, 1.0f, false, PerformanceCounterMode::Fps, true},
+    {"chatHistoryDown", launcherTextStatic("touchElement.chatHistoryDown", "Dn"), MobileTouchElementKind::Button, true, {0.90f, 0.33f}, 0.90f, keyAction(Key::Down), {}, {}, {}, {},
+      MobileTouchPressMode::SinglePress, 1.0f, false, PerformanceCounterMode::Fps, true},
     {"perfCounter", launcherTextStatic("touchElement.perfCounter", "Perf"), MobileTouchElementKind::PerformanceCounter, false, {0.02f, 0.98f}, 1.0f, noneAction(), {}, {}, {}, {}}
   };
-}
-
-String touchElementSprite(MobileTouchElement const& element, bool held, unsigned aimMode, unsigned hotbarGroup) {
-  if (element.sprite.empty())
-    return {};
-  String name = element.sprite;
-  if (element.action.kind == MobileTouchActionKind::TouchAimModeCycle) {
-    char const* modes[] = {"left", "right", "all", "none"};
-    name = strf("cyclestick_{}", modes[aimMode % 4]);
-  }
-  if (element.id == "hotbarGroup")
-    name = hotbarGroup % 2 ? "cyclehotbar_2" : "cyclehotbar_1";
-  if (element.kind == MobileTouchElementKind::Joystick || element.kind == MobileTouchElementKind::AimJoystick)
-    return strf("osbm/controls/{}.png", name);
-  return strf("osbm/controls/{} ({}).png", name, held ? 2 : 1);
 }
 
 std::vector<MobileGamepadBinding> defaultGamepadBindings() {
@@ -409,12 +347,6 @@ Json jsonFromTouchAction(MobileTouchAction const& action) {
     return JsonObject{{"type", "inventoryWheel"}};
   if (action.kind == MobileTouchActionKind::UiNavigation)
     return JsonObject{{"type", "uiNavigation"}, {"direction", UiNavigationDirectionNames.getRight(action.uiNavigationDirection)}};
-  if (action.kind == MobileTouchActionKind::BodyTech)
-    return JsonObject{{"type", "bodyTech"}};
-  if (action.kind == MobileTouchActionKind::TouchAimModeCycle)
-    return JsonObject{{"type", "touchAimModeCycle"}};
-  if (action.kind == MobileTouchActionKind::OverlayVisibilityCycle)
-    return JsonObject{{"type", "overlayVisibilityCycle"}};
   if (action.kind == MobileTouchActionKind::None)
     return JsonObject{{"type", "none"}};
   return JsonObject{{"type", "key"}, {"key", KeyNames.getRight(action.key)}};
@@ -440,16 +372,6 @@ MobileTouchAction touchActionFromJson(Json const& json, MobileTouchAction def) {
     return inventoryWheelAction();
   if (type.equals("uiNavigation", String::CaseInsensitive) || type.equals("selection", String::CaseInsensitive))
     return uiNavigationAction(UiNavigationDirectionNames.valueLeft(json.getString("direction", UiNavigationDirectionNames.getRight(def.uiNavigationDirection)), def.uiNavigationDirection));
-  if (type == "bodyTech") {
-    MobileTouchAction action;
-    action.kind = MobileTouchActionKind::BodyTech;
-    return action;
-  }
-  if (type == "touchAimModeCycle" || type == "overlayVisibilityCycle") {
-    MobileTouchAction action;
-    action.kind = type == "touchAimModeCycle" ? MobileTouchActionKind::TouchAimModeCycle : MobileTouchActionKind::OverlayVisibilityCycle;
-    return action;
-  }
   if (type.equals("none", String::CaseInsensitive))
     return noneAction();
   auto keyName = json.getString("key", KeyNames.getRight(def.key));
@@ -458,8 +380,6 @@ MobileTouchAction touchActionFromJson(Json const& json, MobileTouchAction def) {
 
 Json jsonFromTouchElement(MobileTouchElement const& element) {
   JsonObject out{
-    {"sprite", element.sprite},
-    {"hideWhenWindowsOpen", element.hideWhenWindowsOpen},
     {"id", element.id},
     {"label", element.label},
     {"kind", elementKindName(element.kind)},
@@ -483,8 +403,6 @@ Json jsonFromTouchElement(MobileTouchElement const& element) {
 }
 
 MobileTouchElement touchElementFromJson(Json const& json, MobileTouchElement def) {
-  def.sprite = json.getString("sprite", def.sprite);
-  def.hideWhenWindowsOpen = json.getBool("hideWhenWindowsOpen", def.hideWhenWindowsOpen);
   def.id = json.getString("id", def.id);
   def.label = json.getString("label", def.label);
   def.kind = elementKindFromName(json.getString("kind", elementKindName(def.kind)));
@@ -514,9 +432,8 @@ JsonArray jsonFromTouchElements(std::vector<MobileTouchElement> const& elements)
 }
 
 std::vector<MobileTouchElement> touchElementsFromConfig(Json const& config) {
-  bool revamped = config.queryString("touch.layout", "revamped") != "legacy";
-  auto elements = defaultTouchElements(revamped);
-  if (auto saved = config.optQueryArray(revamped ? "touch.revampedElements" : "touch.elements")) {
+  auto elements = defaultTouchElements();
+  if (auto saved = config.optQueryArray("touch.elements")) {
     for (auto const& savedElementJson : *saved) {
       String id = savedElementJson.getString("id", "");
       bool merged = false;
@@ -714,47 +631,17 @@ public:
   }
 
   void setGameplayActive(bool active) {
-    if (m_gameplayActive != active) {
-      cancelAll();
-      m_overlayVisibility = 0;
-    }
+    if (m_gameplayActive != active) cancelAll();
     m_gameplayActive = active;
   }
 
-  void setHudVisibilityHandler(std::function<void(bool)> handler) { m_hudVisibilityHandler = std::move(handler); }
-
-  void setTextureLoader(std::function<uintptr_t(String const&)> loader) {
-    m_textureLoader = std::move(loader);
-  }
-
-  void setHotbarGroup(unsigned group) { m_hotbarGroup = group; }
-  void setFacingLeft(bool left) { m_facingLeft = left; }
-
-  void setInterfaceObstructed(bool obstructed) {
-    if (obstructed != m_interfaceObstructed && m_config.revamped) {
-      if (obstructed) {
-        setKeyOwner("touchBodyTech", m_dashKey, false);
-        m_dashActive = false;
-      }
-      // A latched walk/precision key must not turn inventory taps into shift
-      // clicks. Keep the visible toggle's preference and resume on closing.
-      for (auto const& id : m_toggledElements.values()) {
-        if (auto element = findElement(id)) {
-          setAction(element->action, id, !obstructed);
-          if (obstructed && element->hideWhenWindowsOpen)
-            m_toggledElements.remove(id);
-        }
-      }
-      List<uint64_t> fingers;
-      for (auto const& pair : m_fingers.pairs()) {
-        auto element = findElement(pair.second.elementId);
-        if (!element || (obstructed && element->hideWhenWindowsOpen))
-          fingers.append(pair.first);
-      }
-      for (auto finger : fingers)
-        cancelFinger(finger);
-    }
-    m_interfaceObstructed = obstructed;
+  void setTextInputActive(bool active) {
+    bool before = chatModeActive();
+    m_textInputActive = active;
+    // Release everything that is held (joystick, attack, ...) when the chat bar
+    // takes over or hands the screen back.
+    if (before != chatModeActive())
+      cancelAll();
   }
 
   void setGyroAvailable(bool available) {
@@ -773,7 +660,6 @@ public:
   }
 
   void beginFrame() {
-    ++m_inputFrame;
     m_generatedEvents.clear();
     if (!overlayEnabled())
       cancelAll();
@@ -781,7 +667,6 @@ public:
 
   void endFrame() {
     emitActionEdges();
-    updateAimAttack();
   }
 
   void appendGeneratedEvents(List<InputEvent>& outEvents) {
@@ -863,7 +748,6 @@ public:
     m_joystickFinger = 0;
     m_joystickElementId.clear();
     m_moveVec = {};
-    m_dashActive = false;
     m_aimJoystickActive = false;
     m_aimJoystickFinger = 0;
     m_aimJoystickElementId.clear();
@@ -986,12 +870,9 @@ public:
     draw->AddCallback(applyContrastBlendCallback, nullptr);
 
     for (auto const& element : m_elements) {
-      if (!elementVisible(element))
+      if (!element.enabled || !elementVisibleNow(element))
         continue;
 
-      if (m_config.revamped && m_textureLoader && !element.sprite.empty()
-          && m_textureLoader(touchElementSprite(element)))
-        continue;
       Vec2F center = elementCenter(element);
       float elementRadius = radius * std::clamp(element.size, 0.45f, 2.4f);
       float drawRadius = elementRadius / radiusScale;
@@ -1026,40 +907,6 @@ public:
     // Restore the default alpha blend before drawing text on top of the shapes.
     draw->AddCallback(ImDrawCallback_ResetRenderState, nullptr);
 
-    if (m_config.revamped && m_textureLoader) {
-      auto sprite = [&](String const& path, Vec2F const& center, float halfSize) {
-        if (auto texture = m_textureLoader(path)) {
-          draw->AddImage((ImTextureID)texture, ip(center - Vec2F::filled(halfSize)),
-              ip(center + Vec2F::filled(halfSize)), ImVec2(0, 1), ImVec2(1, 0),
-              IM_COL32(255, 255, 255, (int)(255 * op)));
-        }
-      };
-      for (bool stickPass : {true, false}) {
-        for (auto const& element : m_elements) {
-          if (!elementVisible(element) || element.sprite.empty())
-            continue;
-          Vec2F center = elementCenter(element);
-          float r = radius * std::clamp(element.size, 0.45f, 2.4f);
-          bool stick = element.kind == MobileTouchElementKind::Joystick || element.kind == MobileTouchElementKind::AimJoystick;
-          if (stick != stickPass)
-            continue;
-          if (stick) {
-            sprite("osbm/controls/joystick_base.png", center, r);
-            if (element.kind == MobileTouchElementKind::Joystick && m_joystickActive && element.id == m_joystickElementId)
-              center = m_joystickCurrent;
-            if (element.kind == MobileTouchElementKind::AimJoystick && m_aimJoystickActive && element.id == m_aimJoystickElementId)
-              center = m_aimJoystickCurrent;
-          }
-          sprite(touchElementSprite(element, heldElement(element.id), m_touchAimMode, m_hotbarGroup), center, r * (stick ? 0.42f : 0.62f));
-          if (element.sprite == "buttonempty") {
-            auto pos = ip(center);
-            auto size = ImGui::CalcTextSize(element.label.utf8Ptr());
-            labels.push_back({ImVec2(pos.x - size.x / 2, pos.y - size.y / 2), element.label});
-          }
-        }
-      }
-    }
-
     for (auto const& label : labels)
       drawLabelWithOutline(draw, label.pos, label.text.utf8Ptr(), labelColor, labelOutline);
   }
@@ -1069,27 +916,26 @@ public:
   }
 
 private:
-  bool elementVisible(MobileTouchElement const& element) const {
-    if (!element.enabled)
+  // Chat mode only kicks in if at least one enabled chat-only element exists,
+  // so untick them all in the Controls manager to switch the feature off.
+  bool chatModeActive() const {
+    if (!m_textInputActive)
       return false;
-    if (!m_config.revamped)
-      return true;
-    if (m_interfaceObstructed && element.hideWhenWindowsOpen)
-      return false;
-    if (m_overlayVisibility == 0 || element.action.kind == MobileTouchActionKind::OverlayVisibilityCycle || element.id == "pause")
-      return true;
-    return m_overlayVisibility == 1 && (element.kind == MobileTouchElementKind::Joystick || element.kind == MobileTouchElementKind::AimJoystick);
+    for (auto const& element : m_elements) {
+      if (element.enabled && element.chatOnly)
+        return true;
+    }
+    return false;
   }
 
-  void updateAimAttack() {
-    bool active = m_config.revamped && m_aimJoystickActive && m_aimVec.magnitudeSquared() > 0.0001f;
-    setMouseOwner("touchAimLeft", MouseButton::Left, active && (m_touchAimMode == 0 || m_touchAimMode == 2));
-    setMouseOwner("touchAimRight", MouseButton::Right, active && (m_touchAimMode == 1 || m_touchAimMode == 2));
+  bool elementVisibleNow(MobileTouchElement const& element) const {
+    if (element.kind == MobileTouchElementKind::PerformanceCounter)
+      return true;
+    return element.chatOnly == chatModeActive();
   }
 
   enum class FingerRole {
     None,
-    UiPointer,
     Joystick,
     AimJoystick,
     Aim,
@@ -1185,10 +1031,7 @@ private:
       (float)(*m_windowSize)[1] / drawScale[1]
     };
     float shortSide = std::min(drawSize[0], drawSize[1]);
-    float scale = shortSide / 720.0f;
-    // The sprite layout scales down with a smaller viewport too; the legacy
-    // layout retains its original minimum size.
-    return 56.0f * radiusScale * m_config.size * (m_config.revamped ? scale : std::max(1.0f, scale));
+    return 56.0f * radiusScale * m_config.size * std::max(1.0f, shortSide / 720.0f);
   }
 
   float tapMovementThreshold() const {
@@ -1281,67 +1124,57 @@ private:
     state.downTimeMs = Time::monotonicMilliseconds();
 
     bool claimedControl = false;
-    for (unsigned pass = 0; pass < (m_config.revamped ? 2u : 1u) && !claimedControl; ++pass) {
-      for (auto const& element : m_elements) {
-        if (m_config.revamped && ((element.kind == MobileTouchElementKind::Button) != (pass == 0)))
-          continue;
-        if (!elementVisible(element))
-          continue;
+    for (auto const& element : m_elements) {
+      if (!element.enabled || !elementVisibleNow(element))
+        continue;
 
-        Vec2F center = elementCenter(element);
-        float elementRadius = radius * std::clamp(element.size, 0.45f, 2.4f);
-        Vec2F buttonDelta = pos - center;
-        bool buttonHit = m_config.revamped
-            ? std::abs(buttonDelta[0]) <= elementRadius * 0.66f && std::abs(buttonDelta[1]) <= elementRadius * 0.66f
-            : insideCircle(pos, center, elementRadius * 0.70f);
-        if (element.kind == MobileTouchElementKind::Button && buttonHit) {
-          state.role = FingerRole::ActionButton;
-          state.elementId = element.id;
-          state.action = element.action;
-          state.pressMode = element.pressMode;
-          pressActionButton(element);
-          claimedControl = true;
-          break;
-        } else if (element.kind == MobileTouchElementKind::DPad && insideCircle(pos, center, elementRadius * 1.15f)) {
-          state.role = FingerRole::DPad;
-          state.elementId = element.id;
-          updateDPadFinger(state, pos);
-          claimedControl = true;
-          break;
-        } else if (element.kind == MobileTouchElementKind::Joystick && insideCircle(pos, center, elementRadius * 1.25f) && !m_joystickActive) {
-          state.role = FingerRole::Joystick;
-          state.elementId = element.id;
-          m_joystickActive = true;
-          m_joystickFinger = finger;
-          m_joystickElementId = element.id;
-          m_joystickOrigin = center;
-          m_joystickCurrent = pos;
-          m_moveVec = {};
-          claimedControl = true;
-          break;
-        } else if (element.kind == MobileTouchElementKind::AimJoystick && insideCircle(pos, center, elementRadius * 1.25f) && !m_aimJoystickActive) {
-          state.role = FingerRole::AimJoystick;
-          state.elementId = element.id;
-          m_aimJoystickActive = true;
-          m_aimJoystickFinger = finger;
-          m_aimJoystickElementId = element.id;
-          m_aimJoystickOrigin = center;
-          m_aimJoystickCurrent = pos;
-          ensureAimTarget();
-          updateAimJoystickFinger(state, pos);
-          claimedControl = true;
-          break;
-        }
+      Vec2F center = elementCenter(element);
+      float elementRadius = radius * std::clamp(element.size, 0.45f, 2.4f);
+      if (element.kind == MobileTouchElementKind::Button && insideCircle(pos, center, elementRadius * 0.70f)) {
+        state.role = FingerRole::ActionButton;
+        state.elementId = element.id;
+        state.action = element.action;
+        state.pressMode = element.pressMode;
+        pressActionButton(element);
+        claimedControl = true;
+        break;
+      } else if (element.kind == MobileTouchElementKind::DPad && insideCircle(pos, center, elementRadius * 1.15f)) {
+        state.role = FingerRole::DPad;
+        state.elementId = element.id;
+        updateDPadFinger(state, pos);
+        claimedControl = true;
+        break;
+      } else if (element.kind == MobileTouchElementKind::Joystick && insideCircle(pos, center, elementRadius * 1.25f) && !m_joystickActive) {
+        state.role = FingerRole::Joystick;
+        state.elementId = element.id;
+        m_joystickActive = true;
+        m_joystickFinger = finger;
+        m_joystickElementId = element.id;
+        m_joystickOrigin = center;
+        m_joystickCurrent = pos;
+        m_moveVec = {};
+        claimedControl = true;
+        break;
+      } else if (element.kind == MobileTouchElementKind::AimJoystick && insideCircle(pos, center, elementRadius * 1.25f) && !m_aimJoystickActive) {
+        state.role = FingerRole::AimJoystick;
+        state.elementId = element.id;
+        m_aimJoystickActive = true;
+        m_aimJoystickFinger = finger;
+        m_aimJoystickElementId = element.id;
+        m_aimJoystickOrigin = center;
+        m_aimJoystickCurrent = pos;
+        ensureAimTarget();
+        updateAimJoystickFinger(state, pos);
+        claimedControl = true;
+        break;
       }
     }
 
     if (claimedControl) {
       // already assigned above
-    } else if (m_interfaceObstructed && m_config.revamped) {
-      state.role = FingerRole::UiPointer;
-      emitMouseMove(pos);
-      setMouseOwner(strf("uiTouch{}", finger), MouseButton::Left, true);
-    } else if (!m_config.directTouchGestures) {
+    } else if (!m_config.directTouchGestures || chatModeActive()) {
+      // Chat mode swallows stray taps: they must not attack, aim or click away
+      // (and so un-focus) the chat box.
       state.role = FingerRole::None;
       state.movedTooFarForTap = true;
     } else if (m_joystickActive && insideCircle(pos, m_joystickOrigin, radius * 1.35f)) {
@@ -1393,8 +1226,6 @@ private:
     }
 
     m_fingers[finger] = state;
-    if (m_config.revamped && state.role == FingerRole::Joystick)
-      updateFinger(finger, pos);
   }
 
   void updateFinger(uint64_t finger, Vec2F const& pos) {
@@ -1405,9 +1236,7 @@ private:
     m_lastPointerInput = toInputSpace(pos);
     trackTapMotion(*ptr, pos);
 
-    if (ptr->role == FingerRole::UiPointer) {
-      emitMouseMove(pos);
-    } else if (ptr->role == FingerRole::Joystick) {
+    if (ptr->role == FingerRole::Joystick) {
       m_joystickCurrent = pos;
       float radius = controlRadius();
       if (auto element = findElement(ptr->elementId))
@@ -1417,8 +1246,6 @@ private:
       if (mag > radius)
         delta = delta / mag * radius;
 
-      if (m_config.revamped)
-        m_joystickCurrent = m_joystickOrigin + delta;
       float normMag = delta.magnitude() / radius;
       if (normMag < m_config.deadzone)
         m_moveVec = {};
@@ -1454,12 +1281,8 @@ private:
     bool tap = !canceled && isTap(*ptr, pos);
 
     switch (ptr->role) {
-      case FingerRole::UiPointer:
-        emitMouseMove(pos);
-        setMouseOwner(strf("uiTouch{}", finger), MouseButton::Left, false);
-        break;
       case FingerRole::Joystick:
-        if (!m_config.revamped && tap && m_moveVec.magnitudeSquared() <= m_config.deadzone * m_config.deadzone)
+        if (tap && m_moveVec.magnitudeSquared() <= m_config.deadzone * m_config.deadzone)
           emitMouseClick(pos);
         m_joystickActive = false;
         m_joystickElementId.clear();
@@ -1471,7 +1294,6 @@ private:
         m_aimJoystickElementId.clear();
         m_aimJoystickFinger = 0;
         m_aimVec = {};
-        updateAimAttack();
         break;
       case FingerRole::Aim:
         if (m_primaryMouseHeld) {
@@ -1648,15 +1470,13 @@ private:
   }
 
   void emitActionEdges() {
-    bool dash = m_dashActive;
-    setKeyOwner("joystick:right", Key::D, !dash && m_moveVec[0] > 0.30f);
-    setKeyOwner("joystick:left", Key::A, !dash && m_moveVec[0] < -0.30f);
+    setKeyOwner("joystick:right", Key::D, m_moveVec[0] > 0.30f);
+    setKeyOwner("joystick:left", Key::A, m_moveVec[0] < -0.30f);
     setKeyOwner("joystick:up", Key::W, m_moveVec[1] < -0.30f);
     setKeyOwner("joystick:down", Key::S, m_moveVec[1] > 0.30f);
     updateVirtualAimTarget();
     releaseExpiredPulsedActions();
     processMacroEvents();
-    updateBodyTech();
     repeatActionButtons();
     repeatDPadWheelActions();
 
@@ -1804,38 +1624,6 @@ private:
 
   void pressActionButton(MobileTouchElement const& element) {
     m_heldElements.add(element.id);
-    if (element.action.kind == MobileTouchActionKind::BodyTech) {
-      if (!m_dashActive) {
-        // Suspend this stick's held direction so the tech sees two taps.
-        setKeyOwner("joystick:left", Key::A, false);
-        setKeyOwner("joystick:right", Key::D, false);
-        bool left = std::abs(m_moveVec[0]) > 0.30f ? m_moveVec[0] < 0 : m_facingLeft;
-        m_dashKey = left ? Key::A : Key::D;
-        m_dashActive = true;
-        m_dashPhase = 0;
-        m_dashPhaseFrame = m_inputFrame;
-        m_dashNextMs = Time::monotonicMilliseconds() + MacroKeyGapMs;
-      }
-      return;
-    }
-    if (element.action.kind == MobileTouchActionKind::TouchAimModeCycle) {
-      m_touchAimMode = (m_touchAimMode + 1) % 4;
-      updateAimAttack();
-      return;
-    }
-    if (element.action.kind == MobileTouchActionKind::OverlayVisibilityCycle) {
-      bool wasHidden = m_overlayVisibility == 2;
-      cancelAll();
-      m_heldElements.add(element.id);
-      m_overlayVisibility = (m_overlayVisibility + 1) % 3;
-      if (wasHidden != (m_overlayVisibility == 2)) {
-        if (m_hudVisibilityHandler)
-          m_hudVisibilityHandler(m_overlayVisibility != 2);
-        else
-          startPulsedAction(keyAction(Key::F1), "touchHudVisibility");
-      }
-      return;
-    }
     if (element.action.kind == MobileTouchActionKind::GyroToggle) {
       if (m_gyroAvailable && m_config.gyroEnabled) {
         m_gyroRuntimeEnabled = !m_gyroRuntimeEnabled;
@@ -1852,7 +1640,7 @@ private:
         setAction(element.action, element.id, false);
       } else {
         m_toggledElements.add(element.id);
-        setAction(element.action, element.id, !m_interfaceObstructed || !m_config.revamped);
+        setAction(element.action, element.id, true);
       }
     } else if (element.pressMode == MobileTouchPressMode::SinglePress) {
       startPulsedAction(element.action, element.id);
@@ -1872,20 +1660,6 @@ private:
       m_nextActionRepeatMs.remove(state.elementId);
       cancelPulsedAction(state.elementId);
     }
-  }
-
-  void updateBodyTech() {
-    auto now = Time::monotonicMilliseconds();
-    if (!m_dashActive || m_dashPhaseFrame == m_inputFrame || now < m_dashNextMs)
-      return;
-    // Advance at most one edge per input frame. Catching up several timed
-    // edges together would make a press disappear at low frame rates.
-    bool down = m_dashPhase % 2 == 0;
-    setKeyOwner("touchBodyTech", m_dashKey, down);
-    m_dashPhaseFrame = m_inputFrame;
-    m_dashNextMs = now + (down ? MacroKeyHoldMs : MacroKeyGapMs);
-    if (++m_dashPhase == 4)
-      m_dashActive = false;
   }
 
   // Owner tokens for the two direct-touch gestures (single-finger "Aim",
@@ -2191,21 +1965,9 @@ private:
   Vec2U* m_renderCanvasSize = nullptr;
   [[maybe_unused]] float* m_displayScalePtr = nullptr;
   SafeAreaInsets* m_safeAreaPtr = nullptr;
-  std::function<void(bool)> m_hudVisibilityHandler;
-  std::function<uintptr_t(String const&)> m_textureLoader;
-  bool m_interfaceObstructed = false;
-  bool m_facingLeft = false;
-  bool m_dashActive = false;
-  Key m_dashKey = Key::D;
-  unsigned m_dashPhase = 0;
-  uint64_t m_inputFrame = 0;
-  uint64_t m_dashPhaseFrame = 0;
-  int64_t m_dashNextMs = 0;
-  unsigned m_hotbarGroup = 0;
-  unsigned m_touchAimMode = 0;
-  unsigned m_overlayVisibility = 0;
   MobileTouchConfig m_config;
   bool m_gameplayActive = true;
+  bool m_textInputActive = false;
   std::vector<MobileTouchElement> m_elements = defaultTouchElements();
   bool m_gyroAvailable = true;
   List<InputEvent> m_generatedEvents;
@@ -2826,11 +2588,6 @@ MobileTouchInputAdapter::MobileTouchInputAdapter(Vec2U* windowSize, Vec2U* rende
 MobileTouchInputAdapter::~MobileTouchInputAdapter() = default;
 
 void MobileTouchInputAdapter::setConfig(MobileTouchConfig config) { m_impl->setConfig(std::move(config)); }
-void MobileTouchInputAdapter::setHudVisibilityHandler(std::function<void(bool)> handler) { m_impl->setHudVisibilityHandler(std::move(handler)); }
-void MobileTouchInputAdapter::setTextureLoader(std::function<uintptr_t(String const&)> loader) { m_impl->setTextureLoader(std::move(loader)); }
-void MobileTouchInputAdapter::setFacingLeft(bool left) { m_impl->setFacingLeft(left); }
-void MobileTouchInputAdapter::setHotbarGroup(unsigned group) { m_impl->setHotbarGroup(group); }
-void MobileTouchInputAdapter::setInterfaceObstructed(bool obstructed) { m_impl->setInterfaceObstructed(obstructed); }
 void MobileTouchInputAdapter::setGyroAvailable(bool available) { m_impl->setGyroAvailable(available); }
 void MobileTouchInputAdapter::setElements(std::vector<MobileTouchElement> elements) { m_impl->setElements(std::move(elements)); }
 void MobileTouchInputAdapter::beginFrame() { m_impl->beginFrame(); }
@@ -2842,6 +2599,7 @@ bool MobileTouchInputAdapter::processSdlEvent(SDL_Event const& event) { return m
 void MobileTouchInputAdapter::cancelAll() { m_impl->cancelAll(); }
 void MobileTouchInputAdapter::drawOverlay(float fps) { m_impl->drawOverlay(fps); }
 void MobileTouchInputAdapter::setGameplayActive(bool active) { m_impl->setGameplayActive(active); }
+void MobileTouchInputAdapter::setTextInputActive(bool active) { m_impl->setTextInputActive(active); }
 bool MobileTouchInputAdapter::overlayEnabled() const { return m_impl->overlayEnabled(); }
 
 MobileGamepadInputAdapter::MobileGamepadInputAdapter(Vec2U* renderCanvasSize)
